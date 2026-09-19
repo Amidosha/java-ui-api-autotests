@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.amidosha'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+def allureVersion = '2.29.1'
+def selenideVersion = '7.7.3'
+def restAssuredVersion = '5.5.1'
+def junitVersion = '5.11.4'
+
+dependencies {
+    testImplementation platform("org.junit:junit-bom:${junitVersion}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation "com.codeborne:selenide:${selenideVersion}"
+    testImplementation "io.rest-assured:rest-assured:${restAssuredVersion}"
+    testImplementation "io.rest-assured:json-schema-validator:${restAssuredVersion}"
+
+    testImplementation platform("io.qameta.allure:allure-bom:${allureVersion}")
+    testImplementation 'io.qameta.allure:allure-junit5'
+    testImplementation 'io.qameta.allure:allure-selenide'
+    testImplementation 'io.qameta.allure:allure-rest-assured'
+
+    testImplementation 'org.assertj:assertj-core:3.27.3'
+    testImplementation 'org.aeonbits.owner:owner:1.0.12'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    testImplementation 'org.slf4j:slf4j-simple:2.0.16'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform {
+        def includeTags = System.getProperty('includeTags', '')
+        if (includeTags) {
+            includeTags.split(',').each { includeTags(it.trim()) }
+        }
+    }
+    systemProperties(System.getProperties())
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
+        showStandardStreams = false
+    }
+}
+
+tasks.register('apiTest', Test) {
+    useJUnitPlatform {
+        includeTags 'api'
+    }
+    description = 'Run API tests only'
+    group = 'verification'
+}
+
+tasks.register('uiTest', Test) {
+    useJUnitPlatform {
+        includeTags 'ui'
+    }
+    description = 'Run UI tests only'
+    group = 'verification'
+}
